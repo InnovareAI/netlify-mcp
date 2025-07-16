@@ -192,20 +192,6 @@ class NetlifyServer {
             required: ['siteId'],
           },
         },
-        {
-          name: 'createEmptySite',
-          description: 'Create an empty Netlify site for manual deployment',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              name: {
-                type: 'string',
-                description: 'Name for the new site (will be used as subdomain)',
-              },
-            },
-            required: ['name'],
-          },
-        },
       ],
     }));
 
@@ -395,63 +381,6 @@ class NetlifyServer {
               throw new McpError(
                 ErrorCode.InternalError,
                 `Failed to delete site: ${this.formatNetlifyError(error)}`
-              );
-            }
-            throw error;
-          }
-        }
-
-        case 'createEmptySite': {
-          const args = request.params.arguments as unknown as { name: string };
-          if (!args?.name) {
-            throw new McpError(
-              ErrorCode.InvalidParams,
-              'Missing required parameter: name'
-            );
-          }
-
-          try {
-            const siteData = {
-              name: args.name,
-            };
-
-            const response = await this.axiosInstance.post('/sites', siteData);
-
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify({
-                    success: true,
-                    site: {
-                      id: response.data.id,
-                      name: response.data.name,
-                      url: response.data.url,
-                      admin_url: response.data.admin_url,
-                      deploy_url: response.data.deploy_url,
-                      created_at: response.data.created_at,
-                    },
-                    message: `Empty site created successfully! Visit ${response.data.admin_url} to manage it. You can drag and drop files or use the Netlify CLI to deploy.`,
-                    instructions: [
-                      "Upload files via web interface:",
-                      `1. Go to ${response.data.admin_url}`,
-                      "2. Click 'Deploys' tab",
-                      "3. Drag and drop your build folder",
-                      "",
-                      "Or use Netlify CLI:",
-                      "1. npm install -g netlify-cli",
-                      `2. netlify deploy --site=${response.data.id} --dir=./dist`,
-                      `3. netlify deploy --site=${response.data.id} --dir=./dist --prod (for production)`
-                    ],
-                  }, null, 2),
-                },
-              ],
-            };
-          } catch (error) {
-            if (axios.isAxiosError(error)) {
-              throw new McpError(
-                ErrorCode.InternalError,
-                `Failed to create empty site: ${this.formatNetlifyError(error)}`
               );
             }
             throw error;
